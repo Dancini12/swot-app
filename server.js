@@ -3,11 +3,12 @@ const path    = require('path');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.OPENAI_API_KEY || '';
+const API_KEY = process.env.OPENAI_API_KEY || 'COLE_SUA_CHAVE_OPENAI_AQUI';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/* ── Proxy para a API da OpenAI ──────────────────── */
 app.post('/api/relatorio', async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -29,11 +30,13 @@ app.post('/api/relatorio', async (req, res) => {
     const data = await response.json();
     if (data.error) return res.status(500).json({ error: data.error.message });
 
+    /* Normaliza resposta para o mesmo formato que o frontend espera */
     const text = data.choices?.[0]?.message?.content || '';
     res.json({ content: [{ text }] });
 
   } catch (err) {
-    res.status(500).json({ error: err.message || 'Erro interno.' });
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Erro interno do servidor.' });
   }
 });
 
