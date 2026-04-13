@@ -355,6 +355,10 @@ body {
   <div style="text-align:center">
     <button class="btn-start" onclick="resetApp()">▶ Começar análise</button>
     <p class="home-sub">Análise estratégica guiada com sugestões por Inteligência Artificial</p>
+    <p style="margin-top:2rem;font-size:12px;color:var(--muted);font-weight:600;line-height:1.7">
+      Desenvolvido por <strong style="color:var(--text)">Prof. Marcel Dancini</strong> · UENP<br>
+      com assistência de <strong style="color:var(--text)">Claude</strong> · Anthropic
+    </p>
   </div>
 </div>
 
@@ -773,7 +777,12 @@ function renderReport(r) {
     <div class="btn-row" style="justify-content:center;margin-top:2rem">
       <button class="btn btn-outline" onclick="goToReview()">← Ver matriz</button>
       <button class="btn btn-pdf" onclick="imprimirPDF()">🖨 Salvar como PDF</button>
-    </div>`;
+    </div>
+
+    <p style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;margin-top:2rem;line-height:1.7">
+      Desenvolvido por <strong style="color:var(--text)">Prof. Marcel Dancini</strong> · UENP<br>
+      com assistência de <strong style="color:var(--text)">Claude</strong> · Anthropic
+    </p>`;
 
   state.reportHTML = html;
   document.getElementById('report-content').innerHTML = html;
