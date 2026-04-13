@@ -706,6 +706,17 @@ Responda SOMENTE com JSON válido (sem markdown):
 }
 
 function renderReport(r) {
+  // Garante que todos os campos existam
+  r.resumo      = r.resumo      || '';
+  r.diagnostico = r.diagnostico || '';
+  r.conclusao   = r.conclusao   || '';
+  r.cruzamentos = r.cruzamentos || {};
+  r.cruzamentos.SO = r.cruzamentos.SO || '';
+  r.cruzamentos.ST = r.cruzamentos.ST || '';
+  r.cruzamentos.WO = r.cruzamentos.WO || '';
+  r.cruzamentos.WT = r.cruzamentos.WT || '';
+  r.solucoes = Array.isArray(r.solucoes) ? r.solucoes : [];
+
   const prioClass = { Alta:'prio-high', Média:'prio-med', Baixa:'prio-low' };
   const date = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
 
@@ -739,15 +750,15 @@ function renderReport(r) {
     <div class="report-block">
       <h3><div class="ico" style="background:#FCEAF0">💡</div>Soluções sugeridas pela IA</h3>
       <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:14px">Com base na análise e no problema identificado pelo cliente:</p>
-      ${r.solucoes.map((s,i) => `
+      ${r.solucoes.length > 0 ? r.solucoes.map((s,i) => `
         <div class="action-row">
           <div class="a-num">${i+1}</div>
-          <div class="a-body"><strong>${esc(s.titulo)}</strong><span>${esc(s.descricao)}</span></div>
+          <div class="a-body"><strong>${esc(s.titulo||s.title||'')}</strong><span>${esc(s.descricao||s.description||'')}</span></div>
           <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0">
-            <span class="prio-badge ${prioClass[s.prioridade]||'prio-low'}">${s.prioridade}</span>
-            <span style="font-size:11px;color:var(--muted);font-weight:700">${s.prazo} prazo</span>
+            <span class="prio-badge ${prioClass[s.prioridade||s.priority]||'prio-low'}">${s.prioridade||s.priority||''}</span>
+            <span style="font-size:11px;color:var(--muted);font-weight:700">${s.prazo||s.deadline||''} prazo</span>
           </div>
-        </div>`).join('')}
+        </div>`).join('') : '<p style="font-size:13px;color:var(--muted)">Nenhuma solução gerada.</p>'}
     </div>
     <div class="report-block" style="background:linear-gradient(135deg,#f5f3ff,#fce8f0);border-color:#d8bfff">
       <h3><div class="ico" style="background:rgba(108,61,232,.15)">🎯</div>Conclusão e próximos passos</h3>
@@ -761,36 +772,8 @@ function renderReport(r) {
 
   state.reportHTML = html;
   document.getElementById('report-content').innerHTML = html;
-
-  // Prepara área de impressão
   const date2 = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
   document.getElementById('print-meta').innerHTML =
     `${esc(state.segmento)}<br>${state.members.map(esc).join(' · ')}<br>${date2}`;
   document.getElementById('print-content').innerHTML = html;
 }
-
-function imprimirPDF() {
-  // Garante que print-area tem conteúdo atualizado
-  document.getElementById('print-content').innerHTML = state.reportHTML;
-  window.print();
-}
-
-function renderError(msg) {
-  document.getElementById('report-content').innerHTML = `
-    <div style="max-width:540px;margin:2rem auto">
-      <div class="error-box"><strong style="display:block;margin-bottom:4px">Não foi possível gerar o relatório</strong>${msg}</div>
-      <div class="btn-row">
-        <button class="btn btn-outline" onclick="goToReview()">← Voltar</button>
-        <button class="btn btn-primary" onclick="goToReport()">Tentar novamente</button>
-      </div>
-    </div>`;
-}
-
-function esc(s) {
-  return String(s||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-</script>
-</body>
-</html>
