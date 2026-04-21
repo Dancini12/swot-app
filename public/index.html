@@ -695,8 +695,24 @@ async function goToReport() {
 }
 
 function buildPrompt() {
-  return `Você é um consultor estratégico especialista em análise SWOT para estudantes de empreendedorismo. Analise e gere um relatório em português brasileiro.
+  return `Você é um consultor estratégico e professor de Administração, especialista em análise SWOT. Gere um relatório em português brasileiro fundamentado na literatura clássica de Administração e Estratégia.
 
+AUTORES DE REFERÊNCIA OBRIGATÓRIA (cite ao longo da análise):
+- Albert Humphrey (1960, Stanford) — criador da análise SWOT
+- Kenneth Andrews (1971) — "The Concept of Corporate Strategy" — estratégia corporativa e ajuste entre capacidades internas e ambiente externo
+- Michael Porter (1980, 1985) — "Estratégia Competitiva" e "Vantagem Competitiva" — 5 forças, estratégias genéricas (custo, diferenciação, foco)
+- Philip Kotler — "Administração de Marketing" — análise de ambiente, posicionamento e segmentação
+- Peter Drucker — "O Gestor Eficaz" — gestão por objetivos, foco em resultados
+- Idalberto Chiavenato — "Introdução à Teoria Geral da Administração" — referência brasileira consolidada
+- Henry Mintzberg — "Safári de Estratégia" — escolas do pensamento estratégico
+- Djalma de Pinho Rebouças de Oliveira — "Planejamento Estratégico" — referência brasileira em SWOT aplicada
+
+INSTRUÇÕES:
+- Cada seção (resumo, diagnóstico, cruzamentos, conclusão) deve conter pelo menos UMA citação de autor entre parênteses, no formato (SOBRENOME, ANO).
+- Use termos técnicos da literatura: "vantagem competitiva" (Porter), "competências essenciais" (Hamel e Prahalad), "ajuste estratégico" (Andrews), "análise ambiental" (Kotler), "posicionamento" (Porter/Ries e Trout).
+- As soluções devem estar fundamentadas em conceitos acadêmicos, não em senso comum.
+
+DADOS PARA ANÁLISE:
 SEGMENTO: ${state.segmento}
 PROBLEMA DO CLIENTE: ${state.problema}
 FORÇAS: ${state.swot.S.length>0?state.swot.S.join('; '):'não informado'}
@@ -704,24 +720,24 @@ FRAQUEZAS: ${state.swot.W.length>0?state.swot.W.join('; '):'não informado'}
 OPORTUNIDADES: ${state.swot.O.length>0?state.swot.O.join('; '):'não informado'}
 AMEAÇAS: ${state.swot.T.length>0?state.swot.T.join('; '):'não informado'}
 
-Responda SOMENTE com JSON válido (sem markdown):
+Responda SOMENTE com JSON válido (sem markdown, sem texto fora):
 {
-  "resumo": "3-4 frases com visão geral estratégica",
-  "diagnostico": "2-3 frases avaliando forças vs fraquezas em relação ao problema",
+  "resumo": "3-4 frases com visão geral estratégica fundamentada em ao menos 1 autor citado entre parênteses",
+  "diagnostico": "2-3 frases avaliando forças vs fraquezas em relação ao problema, citando conceitos de Porter ou Andrews",
   "cruzamentos": {
-    "SO": "2-3 frases: usar forças para aproveitar oportunidades",
-    "ST": "2-3 frases: usar forças para reduzir ameaças",
-    "WO": "2-3 frases: superar fraquezas aproveitando oportunidades",
-    "WT": "2-3 frases: minimizar fraquezas e evitar ameaças"
+    "SO": "2-3 frases sobre alavancagem, citando Porter ou Kotler",
+    "ST": "2-3 frases sobre proteção/defesa, citando Porter (5 forças) ou Mintzberg",
+    "WO": "2-3 frases sobre desenvolvimento, citando Drucker ou Chiavenato",
+    "WT": "2-3 frases sobre contingência/sobrevivência, citando Oliveira ou Mintzberg"
   },
   "solucoes": [
-    {"titulo":"Nome curto","descricao":"Como resolver o problema","prioridade":"Alta","prazo":"Curto"},
-    {"titulo":"Nome curto","descricao":"Descrição objetiva","prioridade":"Alta","prazo":"Médio"},
-    {"titulo":"Nome curto","descricao":"Descrição objetiva","prioridade":"Média","prazo":"Curto"},
-    {"titulo":"Nome curto","descricao":"Descrição objetiva","prioridade":"Média","prazo":"Longo"},
-    {"titulo":"Nome curto","descricao":"Descrição objetiva","prioridade":"Baixa","prazo":"Médio"}
+    {"titulo":"Nome curto","descricao":"Solução fundamentada em autor (citar entre parênteses)","prioridade":"Alta","prazo":"Curto"},
+    {"titulo":"Nome curto","descricao":"Solução fundamentada em autor","prioridade":"Alta","prazo":"Médio"},
+    {"titulo":"Nome curto","descricao":"Solução fundamentada em autor","prioridade":"Média","prazo":"Curto"},
+    {"titulo":"Nome curto","descricao":"Solução fundamentada em autor","prioridade":"Média","prazo":"Longo"},
+    {"titulo":"Nome curto","descricao":"Solução fundamentada em autor","prioridade":"Baixa","prazo":"Médio"}
   ],
-  "conclusao": "3-4 frases com recomendação estratégica e próximos passos"
+  "conclusao": "3-4 frases com recomendação estratégica principal e próximos passos, citando ao menos 1 autor"
 }`;
 }
 
@@ -772,6 +788,22 @@ function renderReport(r) {
     <div class="report-block" style="background:linear-gradient(135deg,#f5f3ff,#fce8f0);border-color:#d8bfff">
       <h3><div class="ico" style="background:rgba(108,61,232,.15)">🎯</div>Conclusão e próximos passos</h3>
       <p>${esc(r.conclusao)}</p>
+    </div>
+
+    <div class="report-block">
+      <h3><div class="ico" style="background:#F2F5E0">📚</div>Referências bibliográficas</h3>
+      <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:10px">Fundamentação teórica da análise:</p>
+      <ul style="padding-left:1.2rem;font-size:12px;line-height:1.7">
+        <li><strong>ANDREWS, K.</strong> The Concept of Corporate Strategy. Homewood: Irwin, 1971.</li>
+        <li><strong>CHIAVENATO, I.</strong> Introdução à Teoria Geral da Administração. 10. ed. Rio de Janeiro: Elsevier, 2020.</li>
+        <li><strong>DRUCKER, P.</strong> O Gestor Eficaz. Rio de Janeiro: LTC, 2011.</li>
+        <li><strong>HUMPHREY, A.</strong> SWOT Analysis for Management Consulting. SRI International, 1960.</li>
+        <li><strong>KOTLER, P.; KELLER, K. L.</strong> Administração de Marketing. 15. ed. São Paulo: Pearson, 2019.</li>
+        <li><strong>MINTZBERG, H.; AHLSTRAND, B.; LAMPEL, J.</strong> Safári de Estratégia. 2. ed. Porto Alegre: Bookman, 2010.</li>
+        <li><strong>OLIVEIRA, D. P. R.</strong> Planejamento Estratégico: conceitos, metodologia, práticas. 34. ed. São Paulo: Atlas, 2018.</li>
+        <li><strong>PORTER, M. E.</strong> Estratégia Competitiva: técnicas para análise de indústrias e da concorrência. Rio de Janeiro: Elsevier, 2004.</li>
+        <li><strong>PORTER, M. E.</strong> Vantagem Competitiva: criando e sustentando um desempenho superior. Rio de Janeiro: Elsevier, 1989.</li>
+      </ul>
     </div>
 
     <div class="btn-row" style="justify-content:center;margin-top:2rem">
