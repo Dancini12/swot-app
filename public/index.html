@@ -251,6 +251,39 @@ body {
 @keyframes spin{to{transform:rotate(360deg)}}
 .error-box{background:#FCEAF0;border:1.5px solid var(--t);border-radius:var(--radius-sm);padding:1rem 1.25rem;font-size:14px;font-weight:600;color:var(--t2);margin-bottom:1rem}
 
+/* ── INDICADORES / KPI ── */
+.metrica-row{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;animation:slideIn .2s ease}
+.metrica-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.metrica-head .m-indicador{flex:1}
+.metrica-grid{display:grid;grid-template-columns:1.3fr .8fr .8fr .8fr;gap:8px}
+.metrica-grid label{display:flex;flex-direction:column;font-size:10px;font-weight:900;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;gap:4px}
+.metrica-grid input{width:100%;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:9px 10px;outline:none;transition:border-color .2s,box-shadow .2s}
+.metrica-grid input:focus{border-color:var(--s);box-shadow:0 0 0 3px rgba(42,191,191,.15)}
+#btn-add-metrica{margin-top:2px}
+.kpi-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px}
+.kpi-name{font-size:14px;font-weight:900;color:var(--text);margin-bottom:10px}
+.kpi-bar{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;margin-bottom:6px}
+.kpi-bar-lbl{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi-bar-track{position:relative;height:14px;background:#E4E2DA;border-radius:8px;overflow:hidden}
+.kpi-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:8px;min-width:4px;transition:width .4s ease}
+.kpi-bar-fill.kpi-antes{background:var(--gray-cell)}
+.kpi-bar-fill.kpi-meta{background:var(--s)}
+.kpi-bar-fill.kpi-depois{background:var(--o)}
+.kpi-bar-val{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap}
+.kpi-delta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;font-size:12px;font-weight:800;color:var(--muted)}
+.kpi-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:900;letter-spacing:.03em;text-transform:uppercase}
+.kpi-ok{background:#E8F9F9;color:var(--s2)}
+.kpi-no{background:#FCEAF0;color:var(--t2)}
+.kpi-review-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;padding:6px 0;border-bottom:1px dashed var(--border)}
+.kpi-review-row:last-child{border-bottom:none}
+.kpi-review-name{color:var(--text)}
+.kpi-review-nums{color:var(--muted);white-space:nowrap}
+@media(max-width:540px){
+  .metrica-grid{grid-template-columns:1fr 1fr}
+  .kpi-bar{grid-template-columns:46px 1fr auto}
+  .kpi-review-row{flex-direction:column;gap:2px}
+}
+
 /* ══════════════════════════════════════════════
    IMPRESSÃO / PDF
 ══════════════════════════════════════════════ */
@@ -396,10 +429,22 @@ body {
       <input type="text" id="segmento" placeholder="Ex: Tecnologia, Agronegócio, Varejo de moda, Saúde…" />
       <div class="hint">Descreva o setor de atuação da empresa analisada.</div>
     </div>
-    <div class="field" style="margin-bottom:0">
+    <div class="field">
       <label>Problema que o cliente quer resolver</label>
       <textarea id="problema" rows="3" placeholder="Qual é o principal problema ou necessidade identificada pelo cliente?"></textarea>
       <div class="hint">Seja objetivo — 2 a 4 frases são suficientes.</div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Indicadores — como medir o problema</label>
+      <div class="hint" style="margin-top:0;margin-bottom:12px">
+        Defina como o problema será medido. Informe o valor <strong>ANTES</strong> (situação atual) e a
+        <strong>META</strong> (valor desejado depois da solução). O campo <strong>DEPOIS</strong> é preenchido
+        mais tarde, quando a solução já tiver sido aplicada, para comparar o antes e o depois.
+      </div>
+      <div id="metricas-fields"></div>
+      <button type="button" class="btn-add-member" id="btn-add-metrica" onclick="addMetricaField()">
+        <span class="plus-icon">+</span> Adicionar indicador
+      </button>
     </div>
   </div>
   <div class="btn-row">
@@ -438,6 +483,7 @@ body {
 <script>
 const MAX_MEMBERS = 5;
 const MAX_ITEMS   = 6;
+const MAX_METRICS = 4;
 
 const QUADRANTS = [
   { key:'S', label:'Forças',        en:'Strengths',
@@ -459,7 +505,7 @@ const QUADRANTS = [
 ];
 
 let state = {
-  members:[], segmento:'', problema:'',
+  members:[], segmento:'', problema:'', metricas:[],
   swot:{ S:[], W:[], O:[], T:[] },
   currentQ:0,
   reportHTML: ''
@@ -515,15 +561,101 @@ function removeMemberField(idx) {
 
 addMemberField();
 
+/* ── Indicadores dinâmicos ──────────────────── */
+let metricaCount = 0;
+
+function addMetricaField() {
+  if (metricaCount >= MAX_METRICS) return;
+  const wrap = document.getElementById('metricas-fields');
+  if (!wrap) return;
+  const i = metricaCount++;
+  const row = document.createElement('div');
+  row.className = 'metrica-row';
+  row.id = `metrica-row-${i}`;
+  row.innerHTML = `
+    <div class="metrica-head">
+      <span class="member-num">${i + 1}</span>
+      <input type="text" class="m-indicador" maxlength="90"
+             placeholder="O que medir? Ex: tempo médio de espera do pedido" />
+      ${i > 0 ? `<button type="button" class="btn-remove-member" onclick="removeMetricaField(${i})" title="Remover">✕</button>` : ''}
+    </div>
+    <div class="metrica-grid">
+      <label>Unidade<input type="text" class="m-unidade" maxlength="14" placeholder="min · % · kg/dia · R$" /></label>
+      <label>Antes<input type="text" inputmode="decimal" class="m-antes" placeholder="0" /></label>
+      <label>Meta<input type="text" inputmode="decimal" class="m-meta" placeholder="0" /></label>
+      <label>Depois<input type="text" inputmode="decimal" class="m-depois" placeholder="—" /></label>
+    </div>`;
+  wrap.appendChild(row);
+  const first = row.querySelector('.m-indicador');
+  if (first) first.focus();
+  syncMetricaAddBtn();
+}
+
+function removeMetricaField(i) {
+  const row = document.getElementById(`metrica-row-${i}`);
+  if (row) row.remove();
+  const rows = document.querySelectorAll('#metricas-fields .metrica-row');
+  metricaCount = rows.length;
+  rows.forEach((r, k) => {
+    r.id = `metrica-row-${k}`;
+    const num = r.querySelector('.member-num');
+    if (num) num.textContent = k + 1;
+    const del = r.querySelector('.btn-remove-member');
+    if (del) del.setAttribute('onclick', `removeMetricaField(${k})`);
+  });
+  syncMetricaAddBtn();
+}
+
+function syncMetricaAddBtn() {
+  const btn = document.getElementById('btn-add-metrica');
+  if (!btn) return;
+  if (metricaCount >= MAX_METRICS) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="plus-icon" style="background:var(--muted)">+</span> Máximo de ${MAX_METRICS} indicadores`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="plus-icon">+</span> Adicionar indicador`;
+  }
+}
+
+function parseNum(v) {
+  if (v == null) return null;
+  const s = String(v).replace(',', '.').trim();
+  if (s === '') return null;
+  const n = Number(s);
+  return Number.isNaN(n) ? NaN : n;
+}
+
+function collectMetricas() {
+  const out = [];
+  document.querySelectorAll('#metricas-fields .metrica-row').forEach(row => {
+    const indicador = row.querySelector('.m-indicador').value.trim();
+    const unidade   = row.querySelector('.m-unidade').value.trim();
+    const antes  = parseNum(row.querySelector('.m-antes').value);
+    const meta   = parseNum(row.querySelector('.m-meta').value);
+    const depois = parseNum(row.querySelector('.m-depois').value);
+    if (!indicador && !unidade && antes === null && meta === null && depois === null) return;
+    out.push({ indicador, unidade, antes, meta, depois });
+  });
+  return out;
+}
+
+addMetricaField();
+
 /* ── Reset completo para nova análise ── */
 function resetApp() {
-  state = { members:[], segmento:'', problema:'', swot:{ S:[], W:[], O:[], T:[] }, currentQ:0, reportHTML:'' };
+  state = { members:[], segmento:'', problema:'', metricas:[], swot:{ S:[], W:[], O:[], T:[] }, currentQ:0, reportHTML:'' };
   memberCount = 0;
   const c = document.getElementById('members-fields');
   if (c) c.innerHTML = '';
   const btn = document.getElementById('btn-add-member');
   if (btn) { btn.disabled = false; btn.innerHTML = `<span class="plus-icon">+</span> Adicionar integrante`; }
   addMemberField();
+  metricaCount = 0;
+  const mc = document.getElementById('metricas-fields');
+  if (mc) mc.innerHTML = '';
+  addMetricaField();
+  syncMetricaAddBtn();
   const seg = document.getElementById('segmento');
   const prob = document.getElementById('problema');
   if (seg) seg.value = '';
@@ -554,7 +686,24 @@ function goToSwot() {
   const prob = (document.getElementById('problema') || {}).value || '';
   if (!seg.trim())  { alert('Informe o segmento da empresa.'); return; }
   if (!prob.trim()) { alert('Descreva o problema que o cliente quer resolver.'); return; }
+
+  const metricas = collectMetricas();
+  if (metricas.length === 0) {
+    alert('Defina ao menos um indicador para medir o problema (com valor ANTES e META).');
+    return;
+  }
+  const invalida = metricas.find(m =>
+    !m.indicador || m.antes === null || m.meta === null ||
+    Number.isNaN(m.antes) || Number.isNaN(m.meta) ||
+    (m.depois !== null && Number.isNaN(m.depois))
+  );
+  if (invalida) {
+    alert('Cada indicador precisa de um nome, um valor ANTES e uma META numéricos. O campo DEPOIS, quando preenchido, também deve ser numérico.');
+    return;
+  }
+
   state.segmento = seg; state.problema = prob;
+  state.metricas = metricas;
   state.currentQ = 0;
   renderQuadrant(0);
   showScreen('screen-swot');
@@ -633,11 +782,24 @@ function goToReview() {
           ${esc(m)}
         </div>`).join('')}
     </div>`;
+  const metricasReview = (state.metricas && state.metricas.length) ? `
+    <div class="card" style="margin-bottom:0;padding:1.25rem 1.5rem">
+      <div class="ib-label" style="margin-bottom:8px">Indicadores — antes / meta</div>
+      ${state.metricas.map(m => {
+        const u = m.unidade ? ' ' + esc(m.unidade) : '';
+        const dep = (m.depois !== null && !Number.isNaN(m.depois)) ? ` · depois: ${m.depois}${u}` : '';
+        return `<div class="kpi-review-row">
+          <span class="kpi-review-name">${esc(m.indicador)}</span>
+          <span class="kpi-review-nums">${m.antes}${u} &rarr; <strong>${m.meta}${u}</strong>${dep}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
   document.getElementById('info-bar-review').innerHTML = `
     <div class="info-bar">
       <div><div class="ib-label">Segmento</div><div class="ib-val">${esc(state.segmento)}</div></div>
       <div><div class="ib-label">Problema identificado</div><div class="ib-val">${esc(state.problema)}</div></div>
-    </div>`;
+    </div>
+    ${metricasReview}`;
   document.getElementById('matrix-visual').innerHTML = `
     <div class="review-matrix">
       <div></div>
@@ -695,6 +857,13 @@ async function goToReport() {
 }
 
 function buildPrompt() {
+  const metricasTxt = (state.metricas && state.metricas.length)
+    ? state.metricas.map(m => {
+        const u = m.unidade ? ` ${m.unidade}` : '';
+        const dep = (m.depois !== null && !Number.isNaN(m.depois)) ? `; DEPOIS (real) = ${m.depois}${u}` : '';
+        return `- ${m.indicador}: ANTES = ${m.antes}${u}; META = ${m.meta}${u}${dep}`;
+      }).join('\n')
+    : 'não informado';
   return `Você é um consultor estratégico e professor de Administração, especialista em análise SWOT. Gere um relatório em português brasileiro fundamentado na literatura clássica de Administração e Estratégia.
 
 AUTORES DE REFERÊNCIA OBRIGATÓRIA (cite ao longo da análise):
@@ -711,10 +880,14 @@ INSTRUÇÕES:
 - Cada seção (resumo, diagnóstico, cruzamentos, conclusão) deve conter pelo menos UMA citação de autor entre parênteses, no formato (SOBRENOME, ANO).
 - Use termos técnicos da literatura: "vantagem competitiva" (Porter), "competências essenciais" (Hamel e Prahalad), "ajuste estratégico" (Andrews), "análise ambiental" (Kotler), "posicionamento" (Porter/Ries e Trout).
 - As soluções devem estar fundamentadas em conceitos acadêmicos, não em senso comum.
+- Avalie criticamente se os indicadores informados medem de fato o problema, fundamentando em Drucker ("o que não é medido não é gerenciado") e no Balanced Scorecard (KAPLAN e NORTON, 1992). Se algum indicador for inadequado, proponha um melhor.
+- Relacione cada solução proposta ao indicador que ela deve melhorar, deixando claro como comparar o valor de ANTES com o de DEPOIS.
 
 DADOS PARA ANÁLISE:
 SEGMENTO: ${state.segmento}
 PROBLEMA DO CLIENTE: ${state.problema}
+INDICADORES PARA MEDIR O PROBLEMA (antes / meta / depois):
+${metricasTxt}
 FORÇAS: ${state.swot.S.length>0?state.swot.S.join('; '):'não informado'}
 FRAQUEZAS: ${state.swot.W.length>0?state.swot.W.join('; '):'não informado'}
 OPORTUNIDADES: ${state.swot.O.length>0?state.swot.O.join('; '):'não informado'}
@@ -730,6 +903,11 @@ Responda SOMENTE com JSON válido (sem markdown, sem texto fora):
     "WO": "2-3 frases sobre desenvolvimento, citando Drucker ou Chiavenato",
     "WT": "2-3 frases sobre contingência/sobrevivência, citando Oliveira ou Mintzberg"
   },
+  "indicadores": {
+    "avaliacao": "2-3 frases avaliando se os indicadores informados medem de fato o problema; cite Drucker ou Kaplan e Norton (BSC) entre parênteses",
+    "recomendacoes": ["como coletar e registrar cada medição", "com que frequência medir para comparar antes e depois", "1 indicador complementar recomendado"],
+    "metas_comentario": "1-2 frases sobre se as metas informadas são realistas e como garantir uma comparação confiável entre o antes e o depois"
+  },
   "solucoes": [
     {"titulo":"Nome curto","descricao":"Solução fundamentada em autor (citar entre parênteses)","prioridade":"Alta","prazo":"Curto"},
     {"titulo":"Nome curto","descricao":"Solução fundamentada em autor","prioridade":"Alta","prazo":"Médio"},
@@ -744,6 +922,7 @@ Responda SOMENTE com JSON válido (sem markdown, sem texto fora):
 function renderReport(r) {
   const prioClass = { Alta:'prio-high', Média:'prio-med', Baixa:'prio-low' };
   const date = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+  const kpiBlockHtml = renderKpiBlock(r);
 
   const html = `
     <div style="text-align:center;margin-bottom:2rem">
@@ -772,6 +951,7 @@ function renderReport(r) {
         <div class="cross-cell" style="background:#F2F5E0"><strong style="color:#4E5C12">WT — Contingência</strong><p>${esc(r.cruzamentos.WT)}</p></div>
       </div>
     </div>
+    ${kpiBlockHtml}
     <div class="report-block">
       <h3><div class="ico" style="background:#FCEAF0">💡</div>Soluções sugeridas pela IA</h3>
       <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:14px">Com base na análise e no problema identificado pelo cliente:</p>
@@ -798,6 +978,7 @@ function renderReport(r) {
         <li><strong>CHIAVENATO, I.</strong> Introdução à Teoria Geral da Administração. 10. ed. Rio de Janeiro: Elsevier, 2020.</li>
         <li><strong>DRUCKER, P.</strong> O Gestor Eficaz. Rio de Janeiro: LTC, 2011.</li>
         <li><strong>HUMPHREY, A.</strong> SWOT Analysis for Management Consulting. SRI International, 1960.</li>
+        <li><strong>KAPLAN, R. S.; NORTON, D. P.</strong> A Estratégia em Ação: Balanced Scorecard. Rio de Janeiro: Elsevier, 1997.</li>
         <li><strong>KOTLER, P.; KELLER, K. L.</strong> Administração de Marketing. 15. ed. São Paulo: Pearson, 2019.</li>
         <li><strong>MINTZBERG, H.; AHLSTRAND, B.; LAMPEL, J.</strong> Safári de Estratégia. 2. ed. Porto Alegre: Bookman, 2010.</li>
         <li><strong>OLIVEIRA, D. P. R.</strong> Planejamento Estratégico: conceitos, metodologia, práticas. 34. ed. São Paulo: Atlas, 2018.</li>
@@ -840,6 +1021,74 @@ function renderError(msg) {
         <button class="btn btn-outline" onclick="goToReview()">← Voltar</button>
         <button class="btn btn-primary" onclick="goToReport()">Tentar novamente</button>
       </div>
+    </div>`;
+}
+
+/* ── Indicadores no relatório: antes × meta × depois ── */
+function kpiCalc(m) {
+  const hasDepois = m.depois !== null && !Number.isNaN(m.depois);
+  const alvo = hasDepois ? m.depois : m.meta;
+  const vals = [m.antes, m.meta];
+  if (hasDepois) vals.push(m.depois);
+  const max = Math.max(...vals.map(v => Math.abs(v)), 1);
+  let variacao = null;
+  if (m.antes !== 0 && !Number.isNaN(m.antes)) {
+    variacao = ((alvo - m.antes) / Math.abs(m.antes)) * 100;
+  }
+  let status = '', statusOk = false;
+  if (hasDepois && m.meta !== m.antes) {
+    const menorMelhor = m.meta < m.antes;
+    statusOk = menorMelhor ? (m.depois <= m.meta) : (m.depois >= m.meta);
+    status = statusOk ? '✔ meta atingida' : '✘ meta não atingida';
+  }
+  return { hasDepois, max, variacao, status, statusOk };
+}
+
+function renderKpiBlock(r) {
+  if (!state.metricas || !state.metricas.length) return '';
+  const cards = state.metricas.map(m => {
+    const c = kpiCalc(m);
+    const u = m.unidade ? ' ' + esc(m.unidade) : '';
+    const bar = (label, val, cls) => (val === null || Number.isNaN(val)) ? '' : `
+      <div class="kpi-bar">
+        <span class="kpi-bar-lbl">${label}</span>
+        <span class="kpi-bar-track"><span class="kpi-bar-fill ${cls}" style="width:${Math.max(4, (Math.abs(val) / c.max) * 100)}%"></span></span>
+        <span class="kpi-bar-val">${val}${u}</span>
+      </div>`;
+    return `
+      <div class="kpi-card">
+        <div class="kpi-name">${esc(m.indicador)}</div>
+        ${bar('Antes', m.antes, 'kpi-antes')}
+        ${bar('Meta', m.meta, 'kpi-meta')}
+        ${c.hasDepois ? bar('Depois', m.depois, 'kpi-depois') : ''}
+        <div class="kpi-delta">
+          ${c.variacao === null
+            ? '<span>variação % indisponível (valor de "antes" igual a zero)</span>'
+            : `<span>${c.variacao > 0 ? '▲' : c.variacao < 0 ? '▼' : '■'} ${Math.abs(c.variacao).toFixed(1)}% ${c.hasDepois ? '(antes → depois)' : '(antes → meta planejada)'}</span>`}
+          ${c.status ? `<span class="kpi-status ${c.statusOk ? 'kpi-ok' : 'kpi-no'}">${c.status}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  const ind = r && r.indicadores ? r.indicadores : null;
+  const analise = ind ? `
+    <div style="margin-top:16px">
+      <p style="font-weight:900;font-size:13px;margin-bottom:6px">Avaliação dos indicadores</p>
+      ${ind.avaliacao ? `<p>${esc(ind.avaliacao)}</p>` : ''}
+      ${Array.isArray(ind.recomendacoes) && ind.recomendacoes.length
+        ? `<ul style="padding-left:1.2rem;margin-top:8px">${ind.recomendacoes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`
+        : ''}
+      ${ind.metas_comentario ? `<p style="margin-top:8px"><strong>Metas:</strong> ${esc(ind.metas_comentario)}</p>` : ''}
+    </div>` : '';
+
+  return `
+    <div class="report-block">
+      <h3><div class="ico" style="background:#E8F9F9">📊</div>Indicadores — medição antes e depois</h3>
+      <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:14px">
+        Compare a situação atual (antes) com a meta e, quando já disponível, com o resultado real depois da solução.
+      </p>
+      ${cards}
+      ${analise}
     </div>`;
 }
 
