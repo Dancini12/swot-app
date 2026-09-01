@@ -390,7 +390,8 @@ body {
     <p class="home-sub">Análise estratégica guiada com sugestões por Inteligência Artificial</p>
     <p style="margin-top:2rem;font-size:12px;color:var(--muted);font-weight:600;line-height:1.7">
       Desenvolvido por <strong style="color:var(--text)">Prof. Marcel Dancini</strong> · UENP<br>
-      com assistência de <strong style="color:var(--text)">Claude</strong> · Anthropic
+      com assistência de <strong style="color:var(--text)">Claude</strong> · Anthropic<br>
+      <span style="opacity:.6">versão com indicadores antes/depois</span>
     </p>
   </div>
 </div>
@@ -481,6 +482,8 @@ body {
 </div>
 
 <script>
+const BUILD = 'kpi-antes-depois-2026-09-01';
+console.log('SWOT App build:', BUILD);
 const MAX_MEMBERS = 5;
 const MAX_ITEMS   = 6;
 const MAX_METRICS = 4;

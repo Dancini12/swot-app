@@ -4,7 +4,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY || '';
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Nunca servir HTML em cache — garante que todo deploy chega ao aluno na hora.
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 app.post('/api/relatorio', async (req, res) => {
   try {
     const { prompt } = req.body;
